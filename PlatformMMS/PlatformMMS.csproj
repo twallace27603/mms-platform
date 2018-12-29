@@ -5,6 +5,10 @@
     <UserSecretsId>eaa445d6-3b63-4507-b491-2a1ea1ee5879</UserSecretsId>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>D:\build\</OutputPath>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="BuildBundlerMinifier" Version="2.8.391" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
