@@ -3,9 +3,17 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "labId": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": "lods123456"
     },
-    "labPassword": {"type": "string"}
+    "labPassword": {
+      "type": "string",
+      "defaultValue": "Azure!Pa55w0rd"
+    },
+    "labNumber": {
+      "type": "string",
+      "defaultValue": "1"
+    }
   },
   "variables": {
     "storageSku": "Standard_LRS",
