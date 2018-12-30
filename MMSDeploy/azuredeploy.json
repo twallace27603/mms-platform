@@ -13,6 +13,30 @@
     "labNumber": {
       "type": "string",
       "defaultValue": "1"
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
+    },
+    "deploymentPackageFolder": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "WebDeploy package location. This path is relative to the _artifactsLocation parameter"
+      }
+    },
+    "deploymentPackageFileName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the webdeploy package"
+      }
+    },
+    "siteName": {
+      "type": "string",
+      "defaultValue": "waps8083886"
     }
   },
   "variables": {
@@ -33,6 +57,24 @@
         "displayName": "Storage account"
       },
       "kind": "Storage"
+    },
+    {
+      "name": "[concat(parameters('siteName'), '/', 'MSDeploy')]",
+      "type": "Microsoft.Web/sites/extensions",
+      "location": "eastus",
+      "apiVersion": "2015-08-01",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "deployment"
+      },
+      "properties": {
+        "packageUri": "[concat(parameters('_artifactsLocation'), '/', parameters('deploymentPackageFolder'), '/', parameters('deploymentPackageFileName'), parameters('_artifactsLocationSasToken'))]",
+        "dbType": "None",
+        "connectionString": "",
+        "setParameters": {
+          "IIS Web Application Name": "[parameters('siteName')]"
+        }
+      }
     }],
   "outputs": {}
 }
