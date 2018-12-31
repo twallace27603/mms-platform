@@ -10,38 +10,20 @@
       "type": "string",
       "defaultValue": "Azure!Pa55w0rd"
     },
-    "labNumber": {
+    "challengeNumber": {
       "type": "string",
       "defaultValue": "1"
-    },
-    "_artifactsLocation": {
-      "type": "string"
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring"
-    },
-    "deploymentPackageFolder": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "WebDeploy package location. This path is relative to the _artifactsLocation parameter"
-      }
-    },
-    "deploymentPackageFileName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Name of the webdeploy package"
-      }
-    },
-    "siteName": {
-      "type": "string",
-      "defaultValue": "waps8083886"
     }
   },
   "variables": {
     "storageSku": "Standard_LRS",
-    "saName": "[concat('sa', parameters('labId'))]"
+    "saName": "[concat('sa', parameters('labId'))]",
+    "saId":  "[concat(resourceGroup().id,'/providers/Microsoft.Storage/storageAccounts/', variables('saName'))]",
+    "waName": "[concat('mms', parameters('labId'))]",
+    "aspName": "MMS-ASP",
+    "aspSKU": "S1",
+    "deployWeb": "[bool(not(equals(parameters('challengeNumber'),'1')))]"
+
   },
   "resources": [
     {
@@ -59,22 +41,96 @@
       "kind": "Storage"
     },
     {
-      "name": "[concat(parameters('siteName'), '/', 'MSDeploy')]",
-      "type": "Microsoft.Web/sites/extensions",
-      "location": "eastus",
+      "name": "[variables('aspName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "condition": "[variables('deployWeb')]",
       "apiVersion": "2015-08-01",
+      "sku": {
+        "name": "[variables('aspSKU')]"
+      },
       "dependsOn": [ ],
       "tags": {
-        "displayName": "deployment"
+        "displayName": "App Service Plan"
       },
       "properties": {
-        "packageUri": "[concat(parameters('_artifactsLocation'), '/', parameters('deploymentPackageFolder'), '/', parameters('deploymentPackageFileName'), parameters('_artifactsLocationSasToken'))]",
-        "dbType": "None",
-        "connectionString": "",
-        "setParameters": {
-          "IIS Web Application Name": "[parameters('siteName')]"
-        }
+        "name": "[variables('aspName')]",
+        "numberOfWorkers": 1
       }
-    }],
+    },
+    {
+      "name": "[variables('waName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "condition": "[variables('deployWeb')]",
+      "apiVersion": "2015-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('aspName')))]": "Resource",
+        "displayName": "Web App"
+      },
+      "properties": {
+        "name": "[variables('waName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]"
+      },
+      "resources": [
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "condition": "[variables('deployWeb')]",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('waName'))]"
+          ],
+          "tags": {
+            "displayName": "Code Deploy"
+          },
+          "properties": {
+            "packageUri": "https://lodschallenges.blob.core.windows.net/mms/deploy.zip",
+            "dbType": "None",
+            "connectionString": ""
+          }
+        },
+        {
+          "name": "appsettings",
+          "type": "config",
+          "condition": "[variables('deployWeb')]",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('waName'))]",
+            "[concat(resourceId('Microsoft.Web/sites', variables('waName')),'/extensions/MSDeploy')]"
+
+          ],
+          "tags": {
+            "displayName": "webAppSettings"
+          },
+          "properties": {
+            "challengeNumber": "[parameters('challengeNumber')]"
+          }
+
+        },
+        {
+          "apiVersion": "2015-08-01",
+          "name": "connectionstrings",
+          "condition": "[variables('deployWeb')]",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('waName'))]",
+            "[concat(resourceId('Microsoft.Web/sites', variables('waName')),'/extensions/MSDeploy')]",
+            "[concat(resourceId('Microsoft.Web/sites', variables('waName')),'/config/appsettings')]"
+          ],
+          "properties": {
+            "storageConnection": {
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('saName'),';AccountKey=',concat(listKeys(variables('saId'),'2015-05-01-preview').key1),';EndpointSuffix=core.windows.net')]",
+              "type": "Custom"
+            }
+          }
+        }
+      ]
+    }
+],
   "outputs": {}
 }

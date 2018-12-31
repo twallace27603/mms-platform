@@ -29,7 +29,7 @@ namespace MMSLibrary.Queue
                     var account = CloudStorageAccount.Parse(connection);
                     var client = account.CreateCloudQueueClient();
                     _queue = client.GetQueueReference(QueueName);
-                    _queue.CreateIfNotExistsAsync().GetAwaiter();
+                    _queue.CreateIfNotExistsAsync().Wait();
                 }
                 return _queue;
             }

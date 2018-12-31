@@ -1,17 +1,65 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
+<style>
+    button {
+        width: 90%;
+        margin: 10pt;
+        text-align: center
+    }
 
+    .bordered {
+        border: 3px solid blue;
+        border-radius: 7pt;
+        padding: 7pt;
+        height: 500px;
+        display: block;
+        margin: 0px 5px 0px 5px;
+    }
+
+    .bordered-header {
+        border: 3px solid black;
+        border-radius: 7pt;
+        padding: 7pt;
+        display: block;
+        margin: 10px 0px 10px 10px;
+    }
+
+    h2 {
+        font-variant: small-caps;
+    }
+
+    .bordered-header h2, .bordered-header h3 {
+        width: 100%;
+        text-align: center;
+    }
+</style>
 <div class="container">
-    <div class="col-md-6">
+    <div class="col-md-10 bordered-header">
+        <h2 class="text-capitalize">Manage, Monitor and Secure Platform Services</h2>
+        <h3>Validation Page</h3>
+        This page provides functions to test the deployment, monitoring and security of different platform services.
+    </div>
+    @if (ViewBag.ChallengeNumber != "1")
+    {
+    <div class="col-md-5 bordered ">
         <button class="btn" id="generate">Generate Messages</button> <br />
-        <button class="btn" id="retrieve">Get Messages</button> <br />
-        <button class="btn" id="checkTable">Validate Web Job</button> <br />
+        @if (ViewBag.ChallengeNumber != "2")
+        {<button class="btn" id="retrieve">Get Messages</button> <br />}
+        @if (ViewBag.ChallengeNumber == "2")
+        {<button class="btn" id="checkTable">Validate Web Job</button> <br />
+        }
+        </div>
+        <div class="col-md-5 bordered" id="result">
 
-    </div>
-    <div class="col-md-6" id="result">
-
-    </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-md-10 bordered-header ">
+            <p>You have successfully deployed this web app.</p>
+        </div>
+    }
 </div>
 
 

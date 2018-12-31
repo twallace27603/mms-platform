@@ -4,14 +4,22 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using PlatformMMS.Models;
 
 namespace PlatformMMS.Controllers
 {
     public class HomeController : Controller
     {
+
+        private IConfiguration config;
+        public HomeController(IConfiguration config)
+        {
+            this.config = config;
+        }
         public IActionResult Index()
         {
+            ViewBag.ChallengeNumber = config.GetValue(typeof(string),"challengeNumber");
             return View();
         }
 
