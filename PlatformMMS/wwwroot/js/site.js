@@ -86,10 +86,10 @@ $(document).ready(function () {
     }
 
     function generateActivity() {
-        $("#result").html("<h2>Generate Activity</h2><p>The system will generate 30 calls to the server and display the results below.</p><ul id='executionResult' class='resultsDetails'></ul><div id='callbacks'></div>");
+         var loops = 300;
+       $("#result").html("<h2>Generate Activity</h2><p>The system will generate " + loops + " calls to the server and display the results below.</p><ul id='executionResult' class='resultsDetails'></ul><div id='callbacks'></div>");
         var errorCount = 0;
         var callbackCount = 0;
-        var loops = 300;
         for (var lcv = 0; lcv < loops; lcv++) {
             $.get("/api/mms/generateActivity/" + lcv).done(function (resultData) {
                 $('#executionResult').append("<li>" + resultData.data[0] + "</li>");

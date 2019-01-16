@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "challengeNumber": {
-      "value": "3"
+      "value": "5"
     },
     "labId": {
       "value": "lods123456"

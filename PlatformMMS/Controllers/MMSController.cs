@@ -63,10 +63,10 @@ namespace PlatformMMS.Controllers
                 case 1: //Wait a bit and then return something
                     result = await Task.Run<ResultData>(() =>
                     {
-                        var seconds = 5 + rand.Next(2);
+                        var seconds = 1 + rand.Next(4);
                         Thread.Sleep(seconds * 1000);
                         var delayResult = new ResultData() { Code = 1, Success = true };
-                        delayResult.Data.Add($"Run # {id}: Waited for {seconds} seconds at {DateTime.Now.ToShortTimeString()}.");
+                        delayResult.Data.Add($"Run # {id}: Waited for {seconds} seconds at {DateTime.Now.ToLongTimeString()}.");
                         return delayResult;
                     });
                     break;
@@ -75,7 +75,7 @@ namespace PlatformMMS.Controllers
                     {
                         var loadResult = new ResultData { Code = 2, Success = true };
                         var start = DateTime.Now;
-                        int seconds = 2 + rand.Next(3);
+                        int seconds = 3 + rand.Next(3);
                        while((DateTime.Now - start).TotalSeconds < seconds)
                         {
                             double[] data = new double[10000];
@@ -85,7 +85,7 @@ namespace PlatformMMS.Controllers
                             }
                             Array.Sort(data);
                         }
-                        loadResult.Data.Add($"Run {id}: Processed data for {(DateTime.Now - start).TotalSeconds} seconds at {DateTime.Now.ToShortTimeString()}");
+                        loadResult.Data.Add($"Run {id}: Processed data for {(DateTime.Now - start).TotalSeconds} seconds at {DateTime.Now.ToLongTimeString()}");
                         return loadResult;
                     });
 
@@ -97,7 +97,6 @@ namespace PlatformMMS.Controllers
                             throw new IndexOutOfRangeException($"Run {id} generated an error.");
                         case 1:
                             throw new InvalidOperationException($"Run {id} generated an error.");
-                            break;
                         default:
                                 throw new Exception($"Run {id} generated an error.");
                     }
