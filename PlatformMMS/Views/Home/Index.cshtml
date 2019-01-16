@@ -33,6 +33,11 @@
         width: 100%;
         text-align: center;
     }
+    .resultsDetails {
+        overflow-y:auto;
+        display:block;
+        height:300px;
+    }
 </style>
 <div class="container">
     <div class="col-md-10 bordered-header">
@@ -42,13 +47,15 @@
     </div>
     @if (ViewBag.ChallengeNumber != "1")
     {
-    <div class="col-md-5 bordered ">
-        <button class="btn" id="generate">Generate Messages</button> <br />
-        @if (ViewBag.ChallengeNumber != "2")
-        {<button class="btn" id="retrieve">Get Messages</button> <br />}
-        @if (ViewBag.ChallengeNumber == "2")
-        {<button class="btn" id="checkTable">Validate Web Job</button> <br />
-        }
+        <div class="col-md-5 bordered ">
+            <button class="btn" id="generate">Generate Messages</button> <br />
+            @if (ViewBag.ChallengeNumber != "2")
+            {<button class="btn" id="retrieve">Get Messages</button> <br />}
+            @if (ViewBag.ChallengeNumber == "2")
+            {<button class="btn" id="checkTable">Validate Web Job</button> <br />
+            }
+            @if (ViewBag.ChallengeNumber == "5" || ViewBag.ChallengeNumber == "5")
+            {<button class="btn" id="generateActivity">Generate Activity</button> <br />}
         </div>
         <div class="col-md-5 bordered" id="result">
 

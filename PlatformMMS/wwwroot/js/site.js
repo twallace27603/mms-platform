@@ -7,6 +7,7 @@ $(document).ready(function () {
     $('#generate').click(generateMessages);
     $('#retrieve').click(retrieveMessages);
     $('#checkTable').click(checkTable);
+    $('#generateActivity').click(generateActivity);
 
     var batchIds = [];
 
@@ -37,6 +38,7 @@ $(document).ready(function () {
             .fail(function (xhr, status, error) { displayError(error, "Generate Messages"); });
         return false;
     }
+
     function retrieveMessages() {
         $.get("/api/mms/getQueueMessages").done(function (resultData) {
             displayResult(resultData, "Retrieve Messages");
@@ -83,13 +85,36 @@ $(document).ready(function () {
 
     }
 
+    function generateActivity() {
+        $("#result").html("<h2>Generate Activity</h2><p>The system will generate 30 calls to the server and display the results below.</p><ul id='executionResult' class='resultsDetails'></ul><div id='callbacks'></div>");
+        var errorCount = 0;
+        var callbackCount = 0;
+        var loops = 300;
+        for (var lcv = 0; lcv < loops; lcv++) {
+            $.get("/api/mms/generateActivity/" + lcv).done(function (resultData) {
+                $('#executionResult').append("<li>" + resultData.data[0] + "</li>");
+                showCallback(++callbackCount, loops);
+            }).fail(function (xhr, status, error) {
+                $('#executionResult').append("<li>Generated error.  This is expected.  Error count = " + ++errorCount + "</li>");
+                showCallback(++callbackCount,loops);
+            });
+        }
+        return false;
+
+        
+
+    }
+
+    function showCallback(count, executions) {
+        $('#callbacks').text("Execution " + count + " of " + executions);
+    }
     function displayResult(data, title) {
         var result = "<h2>" + title + "</h2><hr />";
         result += "<p>Processed at " + Date() + "</p>";
         result += "<table class='table'><thead class='thead-light'><th scope='col'>Result</th><th scope='col'>Value</th></thead><tbody>";
         result += "<tr><th scope='row'>Status</th><td>" + (data.success ? "Success" : "Error") + "<td><tr>";
         result += "<tr><th scope='row'>Code/Count</th><td>" + data.code + "<td><tr>";
-        result += "<tr><th scope='row'>Results<th><td><ul>";
+        result += "<tr><th scope='row'>Results<th><td><ul class='resultsDetails'>";
         $(data.data).each(function (index, row) {
             result += "<li>" + row + "</li>";
         });
@@ -97,6 +122,8 @@ $(document).ready(function () {
         $('#result').html(result);
 
     }
+
+ 
 
     function displayError(error, title) {
         var result = "<h2>" + title + "</h2><hr />";
