@@ -8,6 +8,7 @@ $(document).ready(function () {
     $('#retrieve').click(retrieveMessages);
     $('#checkTable').click(checkTable);
     $('#generateActivity').click(generateActivity);
+    $('#checkNotices').click(checkNotices);
 
     var batchIds = [];
 
@@ -86,7 +87,7 @@ $(document).ready(function () {
     }
 
     function generateActivity() {
-         var loops = 300;
+         var loops = 150;
        $("#result").html("<h2>Generate Activity</h2><p>The system will generate " + loops + " calls to the server and display the results below.</p><ul id='executionResult' class='resultsDetails'></ul><div id='callbacks'></div>");
         var errorCount = 0;
         var callbackCount = 0;
@@ -103,6 +104,31 @@ $(document).ready(function () {
 
         
 
+    }
+
+    function checkNotices() {
+        $('#result').html("<h2>Check Alert Notifications</h2><div id='output'>,/div>");
+        $.getJSON("/api/mms/getNotices").done(function (data) {
+            if (data.success) {
+                if (data.code === 0) {
+                    $('#output').html("<h3>There are no alert notifications. </h3>");
+
+                } else {
+                    var html = "<p>Here are the notifications:</p><ul class='resultsDetails'>";
+                    $(data.data).each(function (index, row) {
+                        html += "<li>" + row + "</li>";
+                    });
+                    html += "</ul>";
+                    $('#output').html(html);
+
+                }
+            } else {
+                $('#output').html("<h3>An error occurred.</h3><p>" + data.data[0] + "</p>");
+
+            }
+        }).fail(function (xhr,status,error) {
+            $('#output').html("<h3>An error occurred.</h3><p>" + error + "</p>");
+        });
     }
 
     function showCallback(count, executions) {

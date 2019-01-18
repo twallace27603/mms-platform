@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
-using MMSLibrary.Queue;
 using MMSLibrary;
+using MMSLibrary.Queue;
 using MMSLibrary.Table;
+using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace PlatformMMS.Controllers
 {
@@ -16,12 +15,14 @@ namespace PlatformMMS.Controllers
     [ApiController]
     public class MMSController : ControllerBase
     {
-        private IConfiguration config;
+        private IConfiguration _configuration;
+        private IMemoryCache _cache;
         private QueueProcessor queueProcessor;
-        public MMSController(IConfiguration configuration)
+        public MMSController(IConfiguration configuration, IMemoryCache cache)
         {
-            config = configuration;
-            queueProcessor = new QueueProcessor(config.GetConnectionString(QueueProcessor.ConnectionName));
+            _configuration = configuration;
+            _cache = cache;
+            queueProcessor = new QueueProcessor(_configuration.GetConnectionString(QueueProcessor.ConnectionName));
         }
 
         [HttpPost]
@@ -42,9 +43,9 @@ namespace PlatformMMS.Controllers
         [Route("getTableRows")]
         public async Task<ResultData> GetRows(string batchId)
         {
-            var tableProcessor = new TableProcessor(config.GetConnectionString(QueueProcessor.ConnectionName));
+            var tableProcessor = new TableProcessor(_configuration.GetConnectionString(QueueProcessor.ConnectionName));
             var result = await tableProcessor.GetItems(batchId);
-            if(result.Code==0)
+            if (result.Code == 0)
             {
                 Response.Headers.Add("Cache-Control", "no-cache");
             }
@@ -53,12 +54,13 @@ namespace PlatformMMS.Controllers
         }
 
         [HttpGet]
-        [Route("generateActivity/{id}")]
+        [Route("generateActivity/{id:int=-1}")]
         public async Task<ResultData> GenerateActivity(int id)
         {
             var result = new ResultData() { Success = false, Code = 0 };
-                         var rand = new Random();
-           switch(id % 3)
+            var rand = new Random();
+            if (id == -1) { id = rand.Next(3); }
+            switch (id % 3)
             {
                 case 1: //Wait a bit and then return something
                     result = await Task.Run<ResultData>(() =>
@@ -76,10 +78,10 @@ namespace PlatformMMS.Controllers
                         var loadResult = new ResultData { Code = 2, Success = true };
                         var start = DateTime.Now;
                         int seconds = 3 + rand.Next(3);
-                       while((DateTime.Now - start).TotalSeconds < seconds)
+                        while ((DateTime.Now - start).TotalSeconds < seconds)
                         {
                             double[] data = new double[10000];
-                            for(int lcv = 0; lcv < 10000; lcv++)
+                            for (int lcv = 0; lcv < 10000; lcv++)
                             {
                                 data[lcv] = rand.NextDouble() * double.MaxValue;
                             }
@@ -98,10 +100,48 @@ namespace PlatformMMS.Controllers
                         case 1:
                             throw new InvalidOperationException($"Run {id} generated an error.");
                         default:
-                                throw new Exception($"Run {id} generated an error.");
+                            throw new Exception($"Run {id} generated an error.");
                     }
             }
             return result;
         }
+
+        [HttpPost]
+        [Route("notify")]
+        public void Notify([FromBody]object payload)
+        {
+            List<string> notices;
+            if (!_cache.TryGetValue("notices", out notices))
+            {
+                notices = new List<string>();
+            }
+            notices.Add(payload.ToString());
+            _cache.Set("notices", notices);
+        }
+
+        [HttpGet]
+        [Route("getNotices")]
+        public ResultData GetNotices()
+        {
+            ResultData result = new ResultData();
+            try
+            {
+                List<string> notices;
+                
+                if(!_cache.TryGetValue<List<string>>("notices", out notices))
+                {
+                    notices = new List<string>();
+                }
+               
+                result = new ResultData { Success = true, Code = notices.Count, Data = notices };
+            } catch(Exception ex)
+            {
+                result.Success = false;
+                result.Code = ex.HResult;
+                result.Data.Add(ex.Message);
+            }
+            return result;
+        }
+
     }
 }
