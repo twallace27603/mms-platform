@@ -14,16 +14,41 @@
       "type": "string",
       "defaultValue": "1"
     }
+
   },
   "variables": {
     "storageSku": "Standard_LRS",
     "saName": "[concat('sa', parameters('labId'))]",
-    "saId":  "[concat(resourceGroup().id,'/providers/Microsoft.Storage/storageAccounts/', variables('saName'))]",
+    "saId": "[concat(resourceGroup().id,'/providers/Microsoft.Storage/storageAccounts/', variables('saName'))]",
     "waName": "[concat('mms', parameters('labId'))]",
     "aspName": "MMS-ASP",
     "aspSKU": "S1",
-    "deployWeb": "[bool(not(equals(parameters('challengeNumber'),'1')))]"
-
+    "deployWeb": "[bool(not(equals(parameters('challengeNumber'),'1')))]",
+    "vnetName": "sqlClient-VNET",
+    "vnetPrefix": "10.0.0.0/16",
+    "vnetSubnet1Name": "clients",
+    "vnetSubnet1Prefix": "10.0.0.0/24",
+    "vmName": "sqlClient-VM",
+    "adminUser": "student",
+    "vmPassword": "[concat('Azure!',parameters('labPassword'))]",
+    "vmImagePublisher": "MicrosoftSQLServer",
+    "vmImageOffer": "SQL2019-WS2016",
+    "vmImageSku": "SQLDEV",
+    "vmOSDiskName": "vmOSDisk",
+    "vmVmSize": "Standard_D2S_v3",
+    "vmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "vmSubnetRef": "[concat(variables('vmVnetID'), '/subnets/', variables('vnetSubnet1Name'))]",
+    "vmNicName": "[concat(variables('vmName'), '-NIC')]",
+    "pipName": "[concat(variables('vmName'),'-PIP')]",
+    "pipDNS": "[concat('sqlvm',parameters('labId'))]",
+    "sqlName": "[concat('sql', parameters('labId'))]",
+    "dbName": "challenge",
+    "dbCollation": "SQL_Latin1_General_CP1_CI_AS",
+    "dbEdition": "Basic",
+    "dbRequestedServiceObjectiveName": "Basic",
+    "vaultName": "[concat('kv-',parameters('labId'))]",
+    "deploySQL": "[bool(greater(int(parameters('challengeNumber')),7))]",
+    "deployValt": "[bool(greater(int(parameters('challengeNumber')),9))]"
   },
   "resources": [
     {
@@ -34,7 +59,7 @@
       "sku": {
         "name": "[variables('storageSku')]"
       },
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "Storage account"
       },
@@ -49,7 +74,7 @@
       "sku": {
         "name": "[variables('aspSKU')]"
       },
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "App Service Plan"
       },
@@ -130,7 +155,199 @@
           }
         }
       ]
+    },
+    {
+      "name": "[variables('vnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "condition": "[variables('deploySQL')]",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "vnet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vnetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vnetSubnet1Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('vmNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "condition": "[variables('deploySQL')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
+      ],
+      "tags": {
+        "displayName": "vmNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('vmSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "condition": "[variables('deploySQL')]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('saName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+      ],
+      "tags": {
+        "displayName": "vm"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[variables('adminUser')]",
+          "adminPassword": "[variables('vmPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmImageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "vmOSDisk",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[variables('pipName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "condition": "[variables('deploySQL')]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "pip"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('pipDNS')]"
+        }
+      }
+    },
+    {
+      "name": "[variables('sqlName')]",
+      "condition": "[variables('deploySQL')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "sql"
+      },
+      "properties": {
+        "administratorLogin": "[variables('adminUser')]",
+        "administratorLoginPassword": "[variables('vmPassword')]"
+      },
+      "resources": [
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "condition": "[variables('deploySQL')]",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('sqlName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[variables('dbName')]",
+          "type": "databases",
+          "condition": "[variables('deploySQL')]",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('sqlName'))]"
+          ],
+          "tags": {
+            "displayName": "db"
+          },
+          "properties": {
+            "collation": "[variables('dbCollation')]",
+            "edition": "[variables('dbEdition')]",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "[variables('dbRequestedServiceObjectiveName')]"
+          }
+        }
+      ]
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/d16cecbc-7278-4cdb-88d2-dde1bbaebe23/resourceGroups/sfckv/providers/Microsoft.KeyVault/vaults/tswsfckv'.",
+      "type": "Microsoft.KeyVault/vaults",
+      "name": "[variables('vaultName')]",
+      "condition": "[variables('deployValt')]",
+      "apiVersion": "2016-10-01",
+      "location": "eastus",
+      "tags": {
+        "displayName": "Key vault"
+      },
+      "scale": null,
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "Standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+        ],
+        "enabledForDeployment": true,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false
+      },
+      "dependsOn": []
     }
-],
+  ],
   "outputs": {}
 }
