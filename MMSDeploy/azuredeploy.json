@@ -47,8 +47,8 @@
     "dbEdition": "Basic",
     "dbRequestedServiceObjectiveName": "Basic",
     "vaultName": "[concat('kv-',parameters('labId'))]",
-    "deploySQL": "[bool(greater(int(parameters('challengeNumber')),7))]",
-    "deployValt": "[bool(greater(int(parameters('challengeNumber')),9))]"
+    "deploySQL": "[bool(and(greater(int(parameters('challengeNumber')),7),not(equals(parameters('challengeNumber'),'10'))))]",
+    "deployVault": "[bool(equals(parameters('challengeNumber'),'-1'))]"
   },
   "resources": [
     {
@@ -331,7 +331,7 @@
       "comments": "Generalized from resource: '/subscriptions/d16cecbc-7278-4cdb-88d2-dde1bbaebe23/resourceGroups/sfckv/providers/Microsoft.KeyVault/vaults/tswsfckv'.",
       "type": "Microsoft.KeyVault/vaults",
       "name": "[variables('vaultName')]",
-      "condition": "[variables('deployValt')]",
+      "condition": "[variables('deployVault')]",
       "apiVersion": "2016-10-01",
       "location": "eastus",
       "tags": {
