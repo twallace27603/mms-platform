@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using PlatformMMS.Models;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Azure.KeyVault.Models;
 
 namespace PlatformMMS.Controllers
 {
@@ -19,14 +22,14 @@ namespace PlatformMMS.Controllers
         }
         public IActionResult Index()
         {
-            ViewBag.ChallengeNumber = config.GetValue(typeof(string),"challengeNumber");
+            ViewBag.ChallengeNumber = config.GetValue(typeof(string), "challengeNumber");
             return View();
         }
 
         public IActionResult About()
         {
-            ViewData["Message"] = "Your application description page.";
-
+            var Message = "Your application description page.";
+ 
             return View();
         }
 

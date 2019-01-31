@@ -1,4 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.KeyVault.Models;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MMSLibrary;
@@ -141,6 +144,73 @@ namespace PlatformMMS.Controllers
                 result.Data.Add(ex.Message);
             }
             return result;
+        }
+
+        [HttpGet]
+        [Route("testKeyVault")]
+        public async Task<ResultData> TestKeyVault()
+        {
+            ResultData result = new ResultData { Code = 0, Success = false };
+            try
+            {
+                int retries = 0;
+                bool retry = false;
+                string connection = "";
+                string errorMessage = "";
+                string secretUri = _configuration.GetValue(typeof(string), "secretUri").ToString(); ;
+                try
+                {
+                    /* The below 4 lines of code shows you how to use AppAuthentication library to fetch secrets from your Key Vault*/
+                    AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
+                    KeyVaultClient keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+                    var secret = await keyVaultClient.GetSecretAsync(secretUri)
+                            .ConfigureAwait(false);
+                    connection = secret.Value;
+
+                    /* The below do while logic is to handle throttling errors thrown by Azure Key Vault. It shows how to do exponential backoff which is the recommended client side throttling*/
+                    do
+                    {
+
+                        secret = await keyVaultClient.GetSecretAsync(secretUri)
+                            .ConfigureAwait(false);
+                        retry = false;
+                    }
+                    while (retry && (retries++ < 10));
+                    connection = secret.Value;
+                }
+                /// <exception cref="KeyVaultErrorException">
+                /// Thrown when the operation returned an invalid status code
+                /// </exception>
+                catch (KeyVaultErrorException keyVaultException)
+                {
+                    connection = "";
+                    errorMessage = keyVaultException.ToString();
+                    if ((int)keyVaultException.Response.StatusCode == 429)
+                        retry = true;
+                }
+                if (!string.IsNullOrEmpty(connection))
+                {
+                    var processor = new QueueProcessor(connection);
+                    var items = new List<DatagramItem>();
+                    items.Add(new DatagramItem { BatchId = DateTime.Now.ToString(), ID = 1, Payload = "Key vault test" });
+                    result = await processor.GenerateMessages(items);
+                    if (result.Success)
+                    {
+                        result = await processor.GetMessages();
+                    }
+
+                }
+                else
+                {
+                    result.Data.Add(errorMessage);
+                }
+            } catch(Exception ex)
+            {
+                result.Code = ex.HResult;
+                result.Data.Add(ex.ToString());
+            }
+            return result;
+
         }
 
     }

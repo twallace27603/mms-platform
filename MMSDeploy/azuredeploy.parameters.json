@@ -6,7 +6,10 @@
       "value": "12"
     },
     "labId": {
-      "value": "lods123456a"
+      "value": "lods123456b"
+    },
+    "labPassword": {
+      "value": "Pa55w0rd"
     }
   }
 }

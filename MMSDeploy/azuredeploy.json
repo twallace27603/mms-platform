@@ -28,7 +28,7 @@
     "vnetPrefix": "10.0.0.0/16",
     "vnetSubnet1Name": "clients",
     "vnetSubnet1Prefix": "10.0.0.0/24",
-    "vmName": "sqlClient-VM",
+    "vmName": "workstation",
     "adminUser": "student",
     "vmPassword": "[concat('Azure!',parameters('labPassword'))]",
     "vmImagePublisher": "MicrosoftSQLServer",
@@ -88,7 +88,10 @@
       "type": "Microsoft.Web/sites",
       "location": "[resourceGroup().location]",
       "condition": "[variables('deployWeb')]",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2016-08-01",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]"
       ],
@@ -99,6 +102,7 @@
       "properties": {
         "name": "[variables('waName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]"
+        
       },
       "resources": [
         {

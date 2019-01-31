@@ -9,6 +9,7 @@ $(document).ready(function () {
     $('#checkTable').click(checkTable);
     $('#generateActivity').click(generateActivity);
     $('#checkNotices').click(checkNotices);
+    $('#testKeyVault').click(testKeyVault);
 
     var batchIds = [];
 
@@ -127,6 +128,26 @@ $(document).ready(function () {
 
             }
         }).fail(function (xhr,status,error) {
+            $('#output').html("<h3>An error occurred.</h3><p>" + error + "</p>");
+        });
+    }
+
+    function testKeyVault() {
+        $('#result').html("<h2>Test Key vault</h2><div id='output'>,/div>");
+        $.getJSON("/api/mms/testKeyVault").done(function (data) {
+            if (data.success) {
+                     var html = "<p>Key vault is successfully implemented.</p><ul class='resultsDetails'>";
+                    $(data.data).each(function (index, row) {
+                        html += "<li>" + row + "</li>";
+                    });
+                    html += "</ul>";
+                    $('#output').html(html);
+
+            } else {
+                $('#output').html("<h3>An error occurred.</h3><p>" + data.data[0] + "</p>");
+
+            }
+        }).fail(function (xhr, status, error) {
             $('#output').html("<h3>An error occurred.</h3><p>" + error + "</p>");
         });
     }
