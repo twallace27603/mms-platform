@@ -23,7 +23,7 @@
     "waName": "[concat('mms', parameters('labId'))]",
     "aspName": "MMS-ASP",
     "aspSKU": "S1",
-    "deployWeb": "[bool(not(equals(parameters('challengeNumber'),'1')))]",
+    "deployWeb": "[bool(and(and(not(equals(parameters('challengeNumber'),'1')),not(equals(parameters('challengeNumber'),'4'))),not(equals(parameters('challengeNumber'),'12'))))]",
     "vnetName": "sqlClient-VNET",
     "vnetPrefix": "10.0.0.0/16",
     "vnetSubnet1Name": "clients",
