@@ -51,7 +51,7 @@
         <button class="btn" id="generate">Generate Messages</button> <br />
         @if (ViewBag.ChallengeNumber != "2")
         {<button class="btn" id="retrieve">Get Messages</button> <br />}
-        @if (ViewBag.ChallengeNumber == "2")
+        @if (ViewBag.ChallengeNumber == "2" || ViewBag.ChallengeNumber == "4" || ViewBag.ChallengeNumber == "12")
         {<button class="btn" id="checkTable">Validate Web Job</button> <br />
         }
         @if (ViewBag.ChallengeNumber == "5" || ViewBag.ChallengeNumber == "6")
