@@ -213,5 +213,14 @@ namespace PlatformMMS.Controllers
 
         }
 
+        [HttpGet]
+        [Route("testConnect")]
+        public ResultData TestConnect()
+        {
+            ResultData result = new ResultData { Code = 0, Success = true };
+            result.Data.Add("Successfully connected");
+            return result;
+        }
+
     }
 }
