@@ -108,7 +108,7 @@ $(document).ready(function () {
     }
 
     function checkNotices() {
-        $('#result').html("<h2>Check Alert Notifications</h2><div id='output'>,/div>");
+        $('#result').html("<h2>Check Alert Notifications</h2><div id='output'></div>");
         $.getJSON("/api/mms/getNotices").done(function (data) {
             if (data.success) {
                 if (data.code === 0) {
