@@ -28,7 +28,7 @@
     "vnetPrefix": "10.0.0.0/16",
     "vnetSubnet1Name": "clients",
     "vnetSubnet1Prefix": "10.0.0.0/24",
-    "vmName": "workstation",
+    "vmName": "sqlClient-VM",
     "adminUser": "student",
     "vmPassword": "[concat('Azure!',parameters('labPassword'))]",
     "vmImagePublisher": "MicrosoftSQLServer",
